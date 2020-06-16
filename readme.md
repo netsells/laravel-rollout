@@ -177,3 +177,29 @@ Swap `{feature}` with the name of the feature, and `{group}` with the name you d
 `php artisan rollout:remove-user {feature} {user}`
 
 Swap `{feature}` with the name of the feature, and `{user}` with a unique identifier for the user in your system to remove the feature from.
+
+## Usage
+In addition to interacting to the rollout class, Laravel Rollout also provides some additional helpers.
+
+### Helpers
+```php
+    $rollout = rollout(); // Returns the rollout instance
+    $canFeature = feature_active('share-with-friend'); // Check if a feature is active for everyone
+    $canFeature = feature_active('share-with-friend', $user); // Check if a feature is active for a user
+```
+
+### User Methods
+```php
+    $user->featureEnabled('share-with-friend')
+    $user->featureNotEnabled('share-with-friend')
+```
+
+### Middleware
+Protect routes from being accessed by disabled users. You can specify multiple features using a comma (Note: *all* features must be enabled to give access).
+```php
+Route::get('{post}/share', [
+    'as' => 'posts.share',
+    'uses' => 'PostShareController@share',
+    'middleware' => 'feature:share-with-friend'
+]);
+```
