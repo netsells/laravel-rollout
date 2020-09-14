@@ -14,17 +14,7 @@ composer require jaspaul/laravel-rollout
 
 ### Configuring the Service Provider
 
-On Laravel 5.5, the package discovery will configure the service provider automatically.
-
-On Laravel 5.4, open config/app.php and register the required service provider above your application providers.
-
-```php
-'providers' => [
-    ...
-    Jaspaul\LaravelRollout\ServiceProvider::class
-    ...
-]
-```
+Package discovery will configure the service provider automatically.
 
 ### Setting up Storage
 
@@ -36,7 +26,7 @@ php artisan vendor:publish --provider 'Jaspaul\LaravelRollout\ServiceProvider'
 
 #### Setting up a Cache
 
-If you intend to use cache to store the settings for rollout, be sure to [enable the cache](https://laravel.com/docs/5.4/cache) for your Laravel application. Note if you are using the cache, a cache clear during deployment will cause your rollout settings to be purged. If you require persistence for these settings use the option below.
+If you intend to use cache to store the settings for rollout, be sure to [enable the cache](https://laravel.com/docs/6.x/cache) for your Laravel application. Note if you are using the cache, a cache clear during deployment will cause your rollout settings to be purged. If you require persistence for these settings use the option below.
 
 #### Setting up Persistent Storage
 
@@ -57,7 +47,8 @@ ROLLOUT_TABLE=rollout
 
 ### Implementing Interfaces
 
-Your rollout users must implement the `\Jaspaul\LaravelRollout\Helpers\User` interface. Often this will be your main user object:
+##### User
+Your rollout users must implement the `\Jaspaul\LaravelRollout\Contracts\User` interface. Often this will be your main user object:
 
 ```php
 <?php
@@ -76,7 +67,62 @@ class User implements Contract
 }
 ```
 
+#### Group
+Your rollout groups must implement the `\Jaspaul\LaravelRollout\Contracts\Group` interface.
+
+```php
+<?php
+
+use Jaspaul\LaravelRollout\Contracts\Group;
+
+class BetaUsersGroup implements Group
+{
+    /**
+     * The name of the group.
+     *
+     * @return string
+     */
+    public function getName(): string
+    {
+        return 'beta-users';
+    }
+
+     /**
+     * Defines the rule membership in the group.
+     *
+     * @return boolean
+     */
+    public function hasMember($user = null): bool
+    {
+        if (!is_null($user)) {
+            return $user->hasOptedIntoBeta();
+        }
+
+        return false;
+    }
+}
+```
+
+and you should update your local `laravel-rollout.php` configuration to include the group in the groups array:
+
+`laravel-rollout.php`
+```php
+return [
+    ...
+    'groups' => [
+        BetaUsersGroup::class
+    ],
+    ...
+]
+```
+
 ## Commands
+
+### Add Group
+
+`php artisan rollout:add-group {feature} {group}`
+
+Swap `{feature}` with the name of the feature, and `{group}` with the name you defined in the group class.
 
 ### Add User
 
@@ -119,6 +165,12 @@ Swap `{feature}` with the name of the feature you'd like to rollout to 100% of y
 `php artisan rollout:percentage {feature} {percentage}`
 
 Swap `{feature}` with the name of the feature you'd like to rollout, and `{percentage}` with the percentage of users to rollout the feature to.
+
+### Remove Group
+
+`php artisan rollout:remove-group {feature} {group}`
+
+Swap `{feature}` with the name of the feature, and `{group}` with the name you defined in the group class.
 
 ### Remove User
 
